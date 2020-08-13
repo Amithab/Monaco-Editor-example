@@ -1,0 +1,97 @@
+    <!DOCTYPE html>
+    <html>
+    <head>
+       <title>Monaco Example</title>
+       <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+       <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+    </head>
+    <body>
+    <h2>Monaco Example here:</h2>
+    <div id="container" style="width:800px;height:600px;border:1px solid grey"></div>
+    <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+       require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
+
+require(['vs/editor/editor.main'], function() {
+       // Register a new language
+monaco.languages.register({ id: 'mySpecialLanguage' });
+
+// Register a tokens provider for the language
+monaco.languages.setMonarchTokensProvider('mySpecialLanguage', {
+	tokenizer: {
+		root: [
+			[/\[error.*/, "custom-error"],
+			[/\[notice.*/, "custom-notice"],
+			[/\[info.*/, "custom-info"],
+			[/\[[a-zA-Z 0-9:]+\]/, "custom-date"],
+		]
+	}
+});
+
+// Adding match brackets stuff - https://stackoverflow.com/questions/47281690/monaco-editor-matchbrackets-do-not-highlight
+config = {"surroundingPairs":[{"open":"{","close":"}"}],"autoClosingPairs":[{"open":"{","close":"}"}],"brackets":[["{","}"]]}
+monaco.languages.setLanguageConfiguration("mySpecialLanguage", config)
+
+// Define a new theme that contains only rules that match this language
+monaco.editor.defineTheme('myCoolTheme', {
+	base: 'vs',
+	inherit: false,
+	rules: [
+		{ token: 'custom-info', foreground: 'a7f542' },
+		{ token: 'custom-error', foreground: 'ff0000', fontStyle: 'bold' },
+		{ token: 'custom-notice', foreground: 'FFA500' },
+		{ token: 'custom-date', foreground: '008800' },
+	]
+});
+
+// Register a completion item provider for the new language
+monaco.languages.registerCompletionItemProvider('mySpecialLanguage', {
+	provideCompletionItems: () => {
+		var suggestions = [{
+			label: 'simpleText',
+			kind: monaco.languages.CompletionItemKind.Text,
+			insertText: 'simpleText'
+		}, {
+			label: 'testing',
+			kind: monaco.languages.CompletionItemKind.Keyword,
+			insertText: 'testing(${1:condition})',
+			insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+		}, {
+			label: 'ifelse',
+			kind: monaco.languages.CompletionItemKind.Snippet,
+			insertText: [
+				'if (${1:condition}) {',
+				'\t$0',
+				'} else {',
+				'\t',
+				'}'
+			].join('\n'),
+			insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+			documentation: 'If-Else Statement'
+		}];
+		return { suggestions: suggestions };
+	}
+});
+
+/* monaco.editor.create(document.getElementById("container"), {
+	theme: 'myCoolTheme',
+	value: getCode(),
+	language: 'mySpecialLanguage'
+}); */
+       
+          // monaco.languages.register({ id: 'calc' });
+          let editor = monaco.editor.create(document.getElementById('container'), {
+             value: [
+                'input a',
+                'b = a * 2',
+                'c = (a - b) / 3',
+                'output c',
+                ''
+             ].join('\n'),
+             language: 'mySpecialLanguage'
+          });
+       });
+    </script>
+    </body>
+    </html>
